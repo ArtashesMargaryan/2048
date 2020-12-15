@@ -1,20 +1,21 @@
 
 export class Item extends Phaser.Sprite {
-    constructor(game, row, col) {
+    constructor(game, row, col, val) {
         super(game);
 
         this._row = row;
         this._col = col;
-        this._ball = null;
         this.empty = 0
-        this.labelVal = 2
-
+        this.labelVal = val
 
         this._build();
     }
 
     get row() {
         return this._row;
+    }
+    get col() {
+        return this._col;
     }
 
     get labelValue() {
@@ -30,7 +31,9 @@ export class Item extends Phaser.Sprite {
     }
 
 
-
+    remove() {
+        this.destroy()
+    }
 
 
     _build() {

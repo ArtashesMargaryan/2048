@@ -3,9 +3,9 @@ export class Cell extends Phaser.Sprite {
     constructor(game, row, col) {
         super(game);
 
-        this._row = row;
-        this._col = col;
-        this._ball = null;
+        this.row = row;
+        this.col = col;
+        this.item = null;
         this._hesItem = 0
 
         this.cellClick = new Phaser.Signal();
@@ -14,18 +14,26 @@ export class Cell extends Phaser.Sprite {
     }
 
     changeItem(val) {
-        this.hesItem = val;
+        this._hesItem = val;
     }
 
-    removeItem() {
-        this.hesItem = 0;
-    }
+    // removeItem() {
+    //     this._hesItem = 0;
+    // }
 
     get isEmpty() {
-        return !this.hesItem;
+        return this._hesItem;
+    }
+    hasItem() {
+        return this.item
     }
 
-
+    addItem(item) {
+        this.item = item
+    }
+    removeItem() {
+        this.item = null
+    }
 
 
 
