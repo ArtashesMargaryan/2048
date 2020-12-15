@@ -11,27 +11,10 @@ export class Board extends Phaser.Sprite {
         this._build();
         this.items = []
         window.addEventListener('keydown', this.pointerControler.bind(this))
-        this.game.state.getCurrentState().input.onDown.add((e) => {
-            this.pointerUp = {
-                y: e.screenY,
-                x: e.screenX
-            }
-            // console.warn(this.pointerDown);
-        })
-        this.game.state.getCurrentState().input.onUp.add((e) => {
-            this.pointerDown = {
-                y: e.screenY,
-                x: e.screenX
-            }
-            // console.warn(this.pointerUp);
 
-        })
-        //     this.addEventListener('pointerdown', (e) => {
-        //         this.pointerDown = {
-        //             y: e.screenY,
-        //             x: e.screenX
-        //         }
-        //     })
+        // console.warn(this.pointerUp);
+
+
 
     }
 
@@ -39,6 +22,16 @@ export class Board extends Phaser.Sprite {
         const state = this.game.state.getCurrentState();
         state.input.onDown.add(this._onPointerDown, this);
         state.input.onUp.add(this._onPointerUp, this);
+
+        if (Math.abs(this._startX - this._endX) > Math.abs(this._startY - this._endY) && this._startX < this._endX) {
+            console.warn("right"); this.goToRight()
+        } else if (Math.abs(this._startX - this._endX) > Math.abs(this._startY - this._endY) && this._startX > this._endX) {
+            console.warn("left"); this.goToLeft()
+        } else if (Math.abs(this._startX - this._endX) < Math.abs(this._startY - this._endY) && this._startY > this._endY) {
+            console.warn("top"); this.goToUp();
+        } else if (Math.abs(this._startX - this._endX) < Math.abs(this._startY - this._endY) && this._startY < this._endY) {
+            console.warn("down"); this.goToDown();
+        }
     }
 
     getEmptyCells() {
