@@ -25,10 +25,12 @@ export class Cell extends Phaser.Sprite {
         return this._hesItem;
     }
     hasItem() {
-        return this.item
+        return this.item ? this.item : false
     }
 
     addItem(item) {
+        const gap = 5
+        item.position.set(this.row * (150 + gap) + 50, this.col * (150 + gap) + 50);
         this.item = item
     }
     removeItem() {
