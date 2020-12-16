@@ -17,26 +17,39 @@ export class Cell extends Phaser.Sprite {
         this._hesItem = val;
     }
 
-    // removeItem() {
-    //     this._hesItem = 0;
-    // }
+    itemValue() {
+        return this.item.labelVal
+    }
 
     get isEmpty() {
         return this._hesItem;
     }
     hasItem() {
-        return this.item ? this.item : false
+        return this.item ? true : false
     }
 
     addItem(item) {
         const gap = 5
-        item.position.set(this.row * (150 + gap) + 50, this.col * (150 + gap) + 50);
         this.item = item
+        this.item.position.set(this.position.x, this.position.y);
+        this.item._col = this.col
+        this.item._row = this.row
     }
     removeItem() {
+        const item = this.item
+
+        this.item.remove()
         this.item = null
+        return item
     }
 
+
+
+    removeItemINCell() {
+        const item = this.item
+        this.item = null
+        return item
+    }
 
 
     _build() {

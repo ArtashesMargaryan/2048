@@ -35,15 +35,20 @@ export class Board extends Phaser.Sprite {
     }
 
     getEmptyCells() {
+        // console.warn(this.getCellsArray());
         const cells = this.getCellsArray();
-        return cells.filter((cell) => cell.isEmpty);
+        const arr = []
+        this.getCellsArray().forEach(element => {
+
+        });
+
     }
 
     getCellsArray() {
         const arrayCells = [];
         this._cells.forEach(cells => {
             cells.forEach(cell => {
-                arrayCells.push(cell)
+                !cell.hasItem() && arrayCells.push(cell)
             })
         })
         return arrayCells
@@ -54,8 +59,35 @@ export class Board extends Phaser.Sprite {
 
     _build() {
         this._buildCells();
-        this.buildItems(randomNumber(4), randomNumber(4), 2)
-        this.buildItems(randomNumber(4), randomNumber(4), 2)
+        this.buildItems(2, 2, 2)
+        this.buildItems(1, 2, 2)
+        console.warn(this.getEmptyCells())
+    }
+
+    generatItemsPosition() {
+        const arrEmptyCells = this.getCellsArray()
+
+        const cell = arrEmptyCells[randomNumber(arrEmptyCells.length - 1)]
+        return [cell.row, cell.col]
+    }
+
+    buildItems(i, j, val = 2) {
+
+
+        if (i > 3 && j > 3) {
+            return
+        }
+        // console.warn(cell);
+        const gap = 5
+        const item = new Item(this.game, i, j, val)
+        item.position.set(i * (150 + gap) + 50, j * (150 + gap) + 50);
+        this._cells[i][j].addItem(item)
+        this.addChild(item)
+    }
+
+    generateRadomItems() {
+        const arr = this.generatItemsPosition()
+        this.buildItems(arr[0], arr[1], 2)
     }
 
     _buildCells() {
@@ -74,23 +106,22 @@ export class Board extends Phaser.Sprite {
         }
     }
 
-    buildItems(i, j, val = 0) {
-        if (i > 3 && j > 3) {
-            return
-        }
-        const cell = this._cells[i][j]
-        cell.changeItem(2)
-        // console.warn(cell);
-        const gap = 5
-        const item = new Item(this.game, i, j, val)
-        item.position.set(i * (150 + gap) + 50, j * (150 + gap) + 50);
-        this._cells[i][j].addItem(item)
-        // console.warn(item);
-        this.addChild(item)
+
+    removeItems(row, col) {
+        console.warn(this.children);
+
+        this.children.forEach(element => {
+            if (element._row === row && element._col === col) {
+                console.warn(element);
+                element.destroy()
+                element = null
+
+            };
+
+        });
     }
 
     pointerControler(e) {
-        console.warn(e.key);
         switch (e.key) {
             case 'ArrowUp':
                 this.goToUp();
@@ -108,49 +139,135 @@ export class Board extends Phaser.Sprite {
 
     }
 
+
     goToUp() {
-        console.warn("hasaGOTO");
         const matrix = this._cells
         for (let i = 1; i < matrix.length; i++) {
             for (let j = 0; j < matrix[i].length; j++) {
                 if (matrix[i][j].hasItem()) {
                     this.moveItemUP(matrix[i][j])
                 }
+            }
+        }
+    }
+
+    moveItemUP(cell) {
+        const nextCellRow = cell.row - 1
+        const nextCellCol = cell.col
+        if (nextCellRow < 0) {
+            return
+        }
+        if (!(this._cells[nextCellRow][nextCellCol].hasItem())) {
+            const item = cell.removeItemINCell()
+            this._cells[nextCellRow][nextCellCol].addItem((item))
+            this.moveItemUP(this._cells[nextCellRow][nextCellCol])
+        } else if (this._cells[nextCellRow][nextCellCol].itemValue() === cell.itemValue()) {
+            const newLabel = 2 * cell.itemValue()
+            this.removeItems(cell.row, cell.col)
+            this.removeItems(nextCellRow, nextCellCol)
+            this.buildItems(nextCellRow, nextCellCol, newLabel)
+        }
+    }
+
+    goToDown() {
+        const matrix = this._cells
+        for (let i = matrix.length - 1; i >= 0; i--) {
+            for (let j = matrix[i].length - 1; j >= 0; j--) {
+                if (matrix[i][j].hasItem()) {
+                    this.moveItemDown(matrix[i][j])
+                }
+            }
+        }
+    }
+
+    moveItemDown(cell) {
+        console.warn(cell);
+        const maxLength = this._cells.length - 1
+        const nextRow = cell.row + 1
+        const nextCellCol = cell.col
+        if (nextRow > maxLength) {
+            return
+        }
+        if (!(this._cells[nextRow][nextCellCol].hasItem())) {
+            const item = cell.removeItemINCell()
+            this._cells[nextRow][nextCellCol].addItem((item))
+            this.moveItemDown(this._cells[nextRow][nextCellCol])
+        } else if (this._cells[nextRow][nextCellCol].itemValue() === cell.itemValue()) {
+            const newLabel = 2 * cell.itemValue()
+            this.removeItems(cell.row, cell.col)
+            this.removeItems(nextRow, nextCellCol)
+            this.buildItems(nextRow, nextCellCol, newLabel)
+
+        }
+    }
+
+    goToLeft() {
+        const matrix = this._cells
+        for (let i = 0; i < matrix.length; i++) {
+            for (let j = matrix[i].length - 1; j >= 0; j--) {
+                if (matrix[i][j].hasItem()) {
+                    this.moveItemLeft(matrix[i][j])
+                }
 
             }
 
         }
-
     }
-
-    goToDown() { }
-
-    goToLeft() { }
-
-    goToRight() { }
-
-    moveItemUP(cell) {
-
-        console.warn("move");
-        const nextCellRow = cell.row
-        const nextCellCol = cell.col - 1
-        console.warn((this._cells[nextCellRow][nextCellCol], cell));
-        if (nextCellCol < 0) {
+    moveItemLeft(cell) {
+        // console.warn("move");
+        const nextRow = cell.row
+        const nextCol = cell.col - 1
+        if (nextCol < 0) {
             return
         }
-        if (!(this._cells[nextCellRow][nextCellCol].hasItem())) {
+        if (!(this._cells[nextRow][nextCol].hasItem())) {
+            const item = cell.removeItemINCell()
+            this._cells[nextRow][nextCol].addItem((item))
+            this.moveItemLeft(this._cells[nextRow][nextCol])
+        } else if (this._cells[nextRow][nextCol].itemValue() === cell.itemValue()) {
+            const newLabel = 2 * cell.itemValue()
+            this.removeItems(cell.row, cell.col)
+            this.removeItems(nextRow, nextCol)
+            this.buildItems(nextRow, nextCol, newLabel)
+        }
+    }
 
-            this._cells[nextCellRow][nextCellCol].addItem(cell.item)
-            cell.removeItem()
-            this.moveItemUP(this._cells[nextCellRow][nextCellCol])
-        } else if (this._cells[nextCellRow][nextCellCol].item['labelVal'] === cell.item['labelVal']) {
-            cell.removeItem()
-            this._cells[nextCellRow][nextCellCol].item['labelVal'] *= 2
-            this.moveItemUP(this._cells[nextCellRow][nextCellCol])
-        } else {
+    goToRight() {
+        const matrix = this._cells
+        for (let i = matrix.length - 1; i >= 0; i--) {
+            for (let j = 0; j < matrix.length; j++) {
+                if (matrix[i][j].hasItem()) {
+                    this.moveItemRight(matrix[i][j])
+                }
+
+            }
 
         }
     }
+    moveItemRight(cell) {
+        const maxLength = this._cells.length - 1
+        // console.warn("move");
+        const nextRow = cell.row
+        const nextCol = cell.col + 1
+        if (nextCol > maxLength) {
+            return
+        }
+        console.warn(this._cells[nextRow][nextCol]);
+        if (!(this._cells[nextRow][nextCol].hasItem())) {
+            const item = cell.removeItemINCell()
+            this._cells[nextRow][nextCol].addItem((item))
+            this.moveItemRight(this._cells[nextRow][nextCol])
+        } else if (this._cells[nextRow][nextCol].itemValue() === cell.itemValue()) {
+            const newLabel = 2 * cell.itemValue()
+            this.removeItems(cell.row, cell.col)
+            this.removeItems(nextRow, nextCol)
+            this.buildItems(nextRow, nextCol, newLabel)
+
+        }
+    }
+
+
+
 
 
 

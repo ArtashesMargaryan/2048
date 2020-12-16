@@ -1,4 +1,3 @@
-
 export class Item extends Phaser.Sprite {
     constructor(game, row, col, val) {
         super(game);
@@ -7,9 +6,28 @@ export class Item extends Phaser.Sprite {
         this._col = col;
         this.empty = 0
         this.labelVal = val
+        this.colors = {
+            2: '0xa89132',
+            4: '0x8ba832',
+            8: '0xdb5151',
+            16: '0x2accf5',
+            32: '0xa42abe3',
+            64: '0x2d1fa6',
+            128: '0xa89132',
+            256: '0xa89132',
+            512: '0xa89132',
+            1024: '0xa89132',
+            2048: '0xa89132',
+            4096: '0xa89132',
+            8192: '0xa89132',
+
+
+
+        }
 
         this._build();
     }
+
 
     get row() {
         return this._row;
@@ -33,6 +51,7 @@ export class Item extends Phaser.Sprite {
 
     remove() {
         this.destroy()
+
     }
 
 
@@ -43,7 +62,7 @@ export class Item extends Phaser.Sprite {
 
     _buildBg() {
         const gr = this.game.add.graphics(0, 0);
-        gr.beginFill(0xff2200);
+        gr.beginFill((this.colors[this.labelVal]));
         gr.drawRect(-75, -75, 150, 150);
         gr.endFill();
         this.addChild((this._bg = gr));
