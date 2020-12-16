@@ -20,38 +20,8 @@ export class Item extends Phaser.Sprite {
             2048: '0xa89132',
             4096: '0xa89132',
             8192: '0xa89132',
-
-
-
         }
-
         this._build();
-    }
-
-
-    get row() {
-        return this._row;
-    }
-    get col() {
-        return this._col;
-    }
-
-    get labelValue() {
-        return this.labelVal;
-    }
-
-    set labelValue(val) {
-        this.labelVal = val
-    }
-
-    get isEmpty() {
-        return !this.empty;
-    }
-
-
-    remove() {
-        this.destroy()
-
     }
 
 
@@ -74,8 +44,34 @@ export class Item extends Phaser.Sprite {
             fill: '#FFAAFF',
             align: 'center',
         }
-        const label = this.game.add.text(0, 0, `${this.labelValue}`, style)
+        // const label = this.game.add.text(0, 0, `2`, style)
+        const label = this.game.add.text(0, 0, `${this.labelVal}`, style)
         label.anchor.set(0.5, 0.5)
         this.addChild((this._label = label));
     }
+    // get row() {
+    //     return this._row;
+    // }
+    // get col() {
+    //     return this._col;
+    // }
+
+    // get labelValue() {
+    //     return this.labelVal;
+    // }
+
+    // set labelValue(val) {
+    //     this.labelVal = val
+    // }
+
+    // get isEmpty() {
+    //     return !this.empty;
+    // }
+
+
+    // remove() {
+    //     this.destroy()
+
+    // }
+
 }
