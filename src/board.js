@@ -7,9 +7,11 @@ export class Board extends Phaser.Sprite {
     constructor(game) {
         super(game);
         this._cells = [];
+        this.dontMove = false
         this.interactive = true
         this._build();
         this.items = []
+        this.item = null
         this.wasDone = false
         this._startPosition = []
         this._finishPosition = []
@@ -17,22 +19,14 @@ export class Board extends Phaser.Sprite {
         this._addListeners()
     }
 
-    // _testTween(i, j, val) {
-    //     const item = new Item(this.game, i, j, val)
-    //     this._cells[i][j].addItem(item)
-    //     this.addChild(item)
-    //     this.game.add.tween(item)
-    //         .to({ x: 500, }, 1000, Phaser.Easing.Back.InOut, true, 1000)
-    //         .onComplete.add(() => console.warn('complete'))
-    // }
 
     _addListeners() {
 
         const state = this.game.state.getCurrentState();
 
-        state.input.onDown.add(this._onPointerDown, this);
+        state.input.onDown.addOnce(this._onPointerDown, this);
 
-        state.input.onUp.add(this._onPointerUp, this);
+        state.input.onUp.addOnce(this._onPointerUp, this);
     }
 
     _onPointerDown(e) {
@@ -41,6 +35,9 @@ export class Board extends Phaser.Sprite {
     }
 
     _onPointerUp(e) {
+        if (this.dontMove) {
+            return
+        }
         const mousX = e.clientX
         const mousY = e.clientX
         const mousXS = this._startPosition[0]
@@ -49,16 +46,17 @@ export class Board extends Phaser.Sprite {
         const deltaX = delta(mousX, mousXS)
         const deltaY = delta(mousY, mousYS)
         const deltaV = -1 ? Math.max(deltaX, deltaY) === deltaY : 1
-        console.warn(mousX, mousXS, deltaV);
-        console.warn(mousY, mousYS, deltaV);
-        ////knayes
-        if (!deltaV && mousX >= mousXS) {
+        if (deltaX < 10 || deltaY < 10) {
+            return
+        }
+
+        if (!deltaV && mousX >= mousXS && deltaX > deltaY) {
             this.goToRight()
-        } else if (deltaV && mousY >= mousYS) {
+        } else if (deltaV && mousY > mousYS && deltaX < deltaY) {
             this.goToDown()
-        } else if (deltaV && mousY < mousYS) {
+        } else if (deltaV && mousY < mousYS && deltaX < deltaY) {
             this.goToUp()
-        } else if (!deltaV && mousX < mousXS) {
+        } else if (!deltaV && mousX < mousXS && deltaX > deltaY) {
             this.goToLeft()
         }
     }
@@ -119,24 +117,31 @@ export class Board extends Phaser.Sprite {
         // return
         const gap = 5
         const item = new Item(this.game, i, j, val)
+        item.position.set(j * (150 + gap) + 50, i * (150 + gap) + 50);
+
         this._cells[i][j].addItem(item)
         this.addChild(item)
+
     }
 
     pointerControler(e) {
+        if (this.dontMove) {
+            return
+        }
+        console.warn(this.wasDone);
         switch (e.key) {
             case 'ArrowUp':
                 this.goToUp();
-                break;
+                break
             case 'ArrowDown':
                 this.goToDown();
-                break;
+                break
             case 'ArrowRight':
                 this.goToRight();
-                break;
+                break
             case 'ArrowLeft':
                 this.goToLeft();
-                break;
+                break
         }
 
     }
@@ -151,13 +156,26 @@ export class Board extends Phaser.Sprite {
     }
 
     generateRadomItems() {
-        // this._testTween()
-        setTimeout(() => {
-            const arr = this.generatItemsPosition()
+        const arr = this.generatItemsPosition()
+        arr && this.buildItems(arr[0], arr[1], 2)
 
-            arr && this.buildItems(arr[0], arr[1], 2)
-        }, 150)
+    }
 
+    updateMatrixCell() {
+        this.dontMove = true
+        this.promArrary = []
+        this._cells.forEach(row => {
+            row.forEach(cell => {
+                if (cell.hasItem()) {
+                    this.itemMoving(cell)
+                }
+            })
+        });
+        const twinActionsPromice = Promise.all(this.promArrary)
+        twinActionsPromice.then(() => {
+            this.generateRadomItems();
+            this.dontMove = false
+        })
     }
 
     removeItems(row, col) {
@@ -171,18 +189,34 @@ export class Board extends Phaser.Sprite {
         });
     }
 
+    itemMoving(cell) {
+        const item = cell.item
+        const { x, y } = cell
+        const prom = new Promise((resolve) => {
+
+            this.game.add.tween(item)
+                .to({ x, y }, 1000, Phaser.Easing.Linear.None, true, 0).onComplete.add(() => {
+                    resolve()
+                })
+        })
+
+        this.promArrary.push(prom)
+
+    }
+
     goToUp() {
         const matrix = this._cells
         for (let i = 1; i < matrix.length; i++) {
             for (let j = 0; j < matrix[i].length; j++) {
                 if (matrix[i][j].hasItem()) {
-                    // console.warn(i, j);
                     this.moveItemUP(matrix[i][j])
                 }
             }
         }
+
         if (this.wasDone) {
-            this.generateRadomItems()
+            this.updateMatrixCell()
+            // this.generateRadomItems()
             this.wasDone = false
         }
     }
@@ -191,23 +225,27 @@ export class Board extends Phaser.Sprite {
         if (cell.row < 1) {
             return
         }
-        const nextCellRow = cell.row - 1
-        const nextCellCol = cell.col
-
-
-        if (!(this._cells[nextCellRow][nextCellCol].hasItem())) {
+        const nextRow = cell.row - 1
+        const nextCol = cell.col
+        if (!(this._cells[nextRow][nextCol].hasItem())) {
             this.wasDone = true
-            const item = cell.removeItemINCell()
-            this._cells[nextCellRow][nextCellCol].addItem((item))
-            this.moveItemUP(this._cells[nextCellRow][nextCellCol])
-        } else if (this._cells[nextCellRow][nextCellCol].itemValue() === cell.itemValue()) {
+            this.item = cell.removeItemINCell()
+            this._cells[nextRow][nextCol].addItem((this.item))
+            this.moveItemUP(this._cells[nextRow][nextCol])
+        } else if (this._cells[nextRow][nextCol].itemValue() === cell.itemValue()) {
             this.wasDone = true
             const newLabel = 2 * cell.itemValue()
             cell.removeItemINCell()
             this.removeItems(cell.row, cell.col)
-            this.removeItems(nextCellRow, nextCellCol)
-            this.buildItems(nextCellRow, nextCellCol, newLabel)
+            this.removeItems(nextRow, nextCol)
+            this.buildItems(nextRow, nextCol, newLabel)
+        } else {
+            if (!this.item) {
+                return
+            }
+
         }
+
     }
 
     goToDown() {
@@ -220,7 +258,9 @@ export class Board extends Phaser.Sprite {
             }
         }
         if (this.wasDone) {
-            this.generateRadomItems()
+            this.updateMatrixCell()
+
+            // this.generateRadomItems()
             this.wasDone = false
         }
     }
@@ -229,13 +269,15 @@ export class Board extends Phaser.Sprite {
         const maxLength = this._cells.length - 1
         const nextRow = cell.row + 1
         const nextCol = cell.col
+        let item
         if (cell.row > maxLength - 1) {
             return
         }
         if (!(this._cells[nextRow][nextCol].hasItem())) {
 
-            const item = cell.removeItemINCell()
-            this._cells[nextRow][nextCol].addItem((item))
+            this.item = cell.removeItemINCell()
+            this._cells[nextRow][nextCol].addItem((this.item))
+
             this.moveItemDown(this._cells[nextRow][nextCol])
             this.wasDone = true
         } else if (this._cells[nextRow][nextCol].itemValue() === cell.itemValue()) {
@@ -245,6 +287,11 @@ export class Board extends Phaser.Sprite {
             this.removeItems(nextRow, nextCol)
             this.wasDone = true
             this.buildItems(nextRow, nextCol, newLabel)
+
+        } else {
+            if (!this.item) {
+                return
+            }
 
         }
     }
@@ -261,7 +308,9 @@ export class Board extends Phaser.Sprite {
 
         }
         if (this.wasDone) {
-            this.generateRadomItems()
+            this.updateMatrixCell()
+
+            // this.generateRadomItems()
             this.wasDone = false
         }
     }
@@ -272,11 +321,10 @@ export class Board extends Phaser.Sprite {
             return
         }
         if (!(this._cells[nextRow][nextCol].hasItem())) {
-            const item = cell.removeItemINCell()
-            this._cells[nextRow][nextCol].addItem((item))
+            this.item = cell.removeItemINCell()
+            this._cells[nextRow][nextCol].addItem((this.item))
             this.moveItemLeft(this._cells[nextRow][nextCol])
             this.wasDone = true
-
         } else if (this._cells[nextRow][nextCol].itemValue() === cell.itemValue()) {
             const newLabel = 2 * cell.itemValue()
             cell.removeItemINCell()
@@ -284,7 +332,10 @@ export class Board extends Phaser.Sprite {
             this.removeItems(nextRow, nextCol)
             this.buildItems(nextRow, nextCol, newLabel)
             this.wasDone = true
-
+        } else {
+            if (!this.item) {
+                return
+            }
         }
     }
 
@@ -295,12 +346,12 @@ export class Board extends Phaser.Sprite {
                 if (matrix[i][j].hasItem()) {
                     this.moveItemRight(matrix[i][j])
                 }
-
             }
-
         }
         if (this.wasDone) {
-            this.generateRadomItems()
+            this.updateMatrixCell()
+
+            // this.generateRadomItems()
             this.wasDone = false
         }
     }
@@ -313,8 +364,8 @@ export class Board extends Phaser.Sprite {
             return
         }
         if (!(this._cells[nextRow][nextCol].hasItem())) {
-            const item = cell.removeItemINCell()
-            this._cells[nextRow][nextCol].addItem((item))
+            this.item = cell.removeItemINCell()
+            this._cells[nextRow][nextCol].addItem((this.item))
             this.wasDone = true
             this.moveItemRight(this._cells[nextRow][nextCol])
         } else if (this._cells[nextRow][nextCol].itemValue() === cell.itemValue()) {
@@ -324,8 +375,11 @@ export class Board extends Phaser.Sprite {
             this.removeItems(nextRow, nextCol)
             this.buildItems(nextRow, nextCol, newLabel)
             this.wasDone = true
-
-
+        } else {
+            if (!this.item) {
+                return
+            }
+            // const { x, y } = cell
         }
     }
 

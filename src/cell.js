@@ -30,9 +30,7 @@ export class Cell extends Phaser.Sprite {
         return this.item.labelVal
     }
 
-    // get isEmpty() {
-    //     return this._hesItem;
-    // }
+
     hasItem() {
         return this.item ? true : false
     }
@@ -40,7 +38,7 @@ export class Cell extends Phaser.Sprite {
     addItem(item) {
         const gap = 5
         this.item = item
-        this.item.position.set(this.position.x, this.position.y);
+        // this.item.position.set(this.position.x, this.position.y);
         this.item._col = this.col
         this.item._row = this.row
     }
