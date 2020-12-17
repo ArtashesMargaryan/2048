@@ -1,6 +1,6 @@
 import { Cell } from "./cell.js";
 import { Item } from "./item.js";
-import { randomNumber } from './utils.js'
+import { randomNumber, delta, deltaVektr } from './utils.js'
 import { BOARD_DIMENSION, INITIAL_BALLS_COUNT } from "./constants.js";
 
 export class Board extends Phaser.Sprite {
@@ -11,11 +11,57 @@ export class Board extends Phaser.Sprite {
         this._build();
         this.items = []
         this.wasDone = false
+        this._startPosition = []
+        this._finishPosition = []
         window.addEventListener('keydown', this.pointerControler.bind(this))
-
+        this._addListeners()
     }
 
+    // _testTween(i, j, val) {
+    //     const item = new Item(this.game, i, j, val)
+    //     this._cells[i][j].addItem(item)
+    //     this.addChild(item)
+    //     this.game.add.tween(item)
+    //         .to({ x: 500, }, 1000, Phaser.Easing.Back.InOut, true, 1000)
+    //         .onComplete.add(() => console.warn('complete'))
+    // }
 
+    _addListeners() {
+
+        const state = this.game.state.getCurrentState();
+
+        state.input.onDown.add(this._onPointerDown, this);
+
+        state.input.onUp.add(this._onPointerUp, this);
+    }
+
+    _onPointerDown(e) {
+        this._startPosition.push(e.clientX)
+        this._startPosition.push(e.clientY)
+    }
+
+    _onPointerUp(e) {
+        const mousX = e.clientX
+        const mousY = e.clientX
+        const mousXS = this._startPosition[0]
+        const mousYS = this._startPosition[1]
+        this._startPosition.splice(0)
+        const deltaX = delta(mousX, mousXS)
+        const deltaY = delta(mousY, mousYS)
+        const deltaV = -1 ? Math.max(deltaX, deltaY) === deltaY : 1
+        console.warn(mousX, mousXS, deltaV);
+        console.warn(mousY, mousYS, deltaV);
+        ////knayes
+        if (!deltaV && mousX >= mousXS) {
+            this.goToRight()
+        } else if (deltaV && mousY >= mousYS) {
+            this.goToDown()
+        } else if (deltaV && mousY < mousYS) {
+            this.goToUp()
+        } else if (!deltaV && mousX < mousXS) {
+            this.goToLeft()
+        }
+    }
 
     getEmptyCells() {
         console.warn(this.getCellsArray());
@@ -48,8 +94,8 @@ export class Board extends Phaser.Sprite {
     addItemRandom() {
         let arr = this.generatItemsPosition()
         this.buildItems(arr[0], arr[1], 2)
-        arr = this.generatItemsPosition()
-        this.buildItems(arr[0], arr[1], 2)
+        // arr = this.generatItemsPosition()
+        // this.buildItems(arr[0], arr[1], 2)
     }
 
     _buildCells() {
@@ -69,6 +115,8 @@ export class Board extends Phaser.Sprite {
     }
 
     buildItems(i, j, val = 2) {
+        // this._testTween(i, j, val)
+        // return
         const gap = 5
         const item = new Item(this.game, i, j, val)
         this._cells[i][j].addItem(item)
@@ -96,18 +144,19 @@ export class Board extends Phaser.Sprite {
     generatItemsPosition() {
         const arrEmptyCells = this.getCellsArray()
         const cell = arrEmptyCells[randomNumber(arrEmptyCells.length - 1)]
-        if (rrEmptyCells.length = 1) {
-            this.gameOver()
+        if (arrEmptyCells.length === 1) {
+            return
         }
         return [cell.row, cell.col]
     }
 
     generateRadomItems() {
+        // this._testTween()
         setTimeout(() => {
             const arr = this.generatItemsPosition()
-            console.warn(arr);
-            this.buildItems(arr[0], arr[1], 2)
-        }, 200)
+
+            arr && this.buildItems(arr[0], arr[1], 2)
+        }, 150)
 
     }
 

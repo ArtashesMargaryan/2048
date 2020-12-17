@@ -7,6 +7,7 @@ export class Cell extends Phaser.Sprite {
         this.item = null;
         this._hesItem = 0
         this._build();
+
     }
 
 
@@ -16,7 +17,7 @@ export class Cell extends Phaser.Sprite {
 
     _buildBg() {
         const gr = this.game.add.graphics(0, 0);
-        gr.beginFill(0xffae00);
+        gr.beginFill(0x9E9E9E);
         gr.drawRect(-75, -75, 150, 150);
         gr.endFill();
         this.addChild((this._bg = gr));
