@@ -61,9 +61,13 @@ export class Item extends Phaser.Sprite {
     }
 
     _buildBg() {
+        const style = {
+
+        }
         const gr = this.game.add.graphics(0, 0);
         gr.beginFill((this.colors[this.labelVal]));
-        gr.drawRect(-75, -75, 150, 150);
+        // gr.drawRect(-72, -72, 145, 145);
+        gr.drawRoundedRect(-70, -70, 140, 140, 18)
         gr.endFill();
         this.addChild((this._bg = gr));
     }
