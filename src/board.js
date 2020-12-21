@@ -123,6 +123,8 @@ export class Board extends Phaser.Sprite {
     // return
     const gap = 5;
     const item = new Item(this.game, i, j, val);
+    this.game.add.tween(item.scale).from({ x: 0.1, y: 0.1 }, 200, Phaser.Easing.Back.Out, true, 0);
+
     item.position.set(j * (150 + gap) + 50, i * (150 + gap) + 50);
 
     this._cells[i][j].addItem(item);
@@ -205,11 +207,6 @@ export class Board extends Phaser.Sprite {
   }
 
   itemBulding(cell, val) {
-    /**?  const item = new Item(this.game, i, j, val)
-        item.position.set(j * (150 + gap) + 50, i * (150 + gap) + 50);
-
-        this._cells[i][j].addItem(item)
-        this.addChild(item) */
     const item = new Item(this.game, cell.row, cell.col, val);
     cell.addItem(item);
     this.addChild(item);
@@ -217,12 +214,18 @@ export class Board extends Phaser.Sprite {
     const prom = new Promise((resolve) => {
       this.game.add
         .tween(item)
-        .from({ x, y }, 1000, Phaser.Easing.Linear.None, true, 0)
+        .from({ x, y }, 200, Phaser.Easing.Linear, true, 300)
         .onComplete.add(() => {
           resolve();
         });
+    }).then(() => {
+      item.resolve.set(0.7, 0.7);
     });
-
+    then(() => {
+      setTimeout(() => {
+        item.resolve.set(2, 2);
+      }, 1000);
+    });
     this.promArrary.push(prom);
   }
 
@@ -308,7 +311,10 @@ export class Board extends Phaser.Sprite {
     ) {
       return 0;
     }
-    if (!this._cells[nextRow][nextCol].hasItem()) {
+    if (
+      !this._cells[nextRow][nextCol].hasItem() &&
+      this._cells[nextRow][nextCol].itemValue() === cell.itemValue()
+    ) {
       this.item = cell.removeItemINCell();
       this._cells[nextRow][nextCol].addItem(this.item);
       this.wasDone = true;
