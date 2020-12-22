@@ -146,6 +146,7 @@ export class Board extends Phaser.Sprite {
     if (this.dontMove) {
       return;
     }
+    console.warn();
     this.dontMove = true;
     switch (e.key) {
       case 'ArrowUp':
@@ -185,6 +186,8 @@ export class Board extends Phaser.Sprite {
   }
 
   updateMatrixCell() {
+    this.dontMove = false;
+
     this.promArrary = [];
     this._cells.forEach((row) => {
       row.forEach((cell) => {
@@ -209,14 +212,20 @@ export class Board extends Phaser.Sprite {
   itemMoving(cell) {
     const item = cell.item;
     const { x, y } = cell;
-    const prom = new Promise((resolve) => {
+    const prom = new Promise((resolve, reject) => {
       this.game.add
         .tween(item)
-        .to({ x, y }, 2000, Phaser.Easing.Linear.None, true, 0)
+        .to({ x, y }, 200, Phaser.Easing.Linear.None, true, 0)
         .onComplete.add(() => {
-          resolve();
+          reject();
         });
-    });
+    })
+      .then(() => {
+        console.warn('resolve');
+      })
+      .catch((err) => {
+        console.warn('reject ', err);
+      });
 
     this.promArrary.push(prom);
   }
@@ -226,6 +235,7 @@ export class Board extends Phaser.Sprite {
     cell.addItem(item);
     this.addChild(item);
     const { x, y } = cell;
+    this.dontMove = false;
     const prom = new Promise((resolve) => {
       this.game.add
         .tween(item.scale)
