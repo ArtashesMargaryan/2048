@@ -90,9 +90,6 @@ export class Board extends Phaser.Sprite {
   _build() {
     this._buildCells();
     this.addItemRandom();
-    this.addItemRandom();
-    this.addItemRandom();
-    this.addItemRandom();
   }
 
   addItemRandom() {
@@ -121,14 +118,19 @@ export class Board extends Phaser.Sprite {
   buildItems(i, j, val = 2) {
     // this._testTween(i, j, val)
     // return
-    const gap = 5;
-    const item = new Item(this.game, i, j, val);
-    this.game.add.tween(item.scale).from({ x: 0.1, y: 0.1 }, 200, Phaser.Easing.Back.Out, true, 0);
+    const promis = new Promise((resolve) => {
+      const gap = 5;
+      const item = new Item(this.game, i, j, val);
+      this.game.add
+        .tween(item.scale)
+        .from({ x: 0.1, y: 0.1 }, 200, Phaser.Easing.Back.Out, true, 150);
 
-    item.position.set(j * (150 + gap) + 50, i * (150 + gap) + 50);
+      item.position.set(j * (150 + gap) + 50, i * (150 + gap) + 50);
 
-    this._cells[i][j].addItem(item);
-    this.addChild(item);
+      this._cells[i][j].addItem(item);
+      this.addChild(item);
+    });
+    return promis;
   }
 
   pointerControler(e) {
@@ -176,10 +178,9 @@ export class Board extends Phaser.Sprite {
     });
     const twinActionsPromice = Promise.all(this.promArrary);
     twinActionsPromice.then(() => {
-      this.generateRadomItems();
       this.checkGame();
-      this.dontMove = false;
     });
+    this.dontMove = false;
   }
 
   removeItems(row, col) {
@@ -197,7 +198,7 @@ export class Board extends Phaser.Sprite {
     const prom = new Promise((resolve) => {
       this.game.add
         .tween(item)
-        .to({ x, y }, 300, Phaser.Easing.Linear.None, true, 0)
+        .to({ x, y }, 200, Phaser.Easing.Linear.None, true, 0)
         .onComplete.add(() => {
           resolve();
         });
@@ -214,7 +215,7 @@ export class Board extends Phaser.Sprite {
     const prom = new Promise((resolve) => {
       this.game.add
         .tween(item)
-        .from({ x, y }, 200, Phaser.Easing.Linear, true, 300)
+        .from({ x, y }, 200, Phaser.Easing.Linear, true, 350)
         .onComplete.add(() => {
           resolve();
         });
@@ -222,11 +223,9 @@ export class Board extends Phaser.Sprite {
       item.resolve.set(0.7, 0.7);
     });
     then(() => {
-      setTimeout(() => {
-        item.resolve.set(2, 2);
-      }, 1000);
+      this.promArrary.push(prom);
+      this.wasDone = true;
     });
-    this.promArrary.push(prom);
   }
 
   goToUp() {
@@ -241,7 +240,7 @@ export class Board extends Phaser.Sprite {
 
     if (this.wasDone) {
       this.updateMatrixCell();
-      // this.generateRadomItems()
+      this.generateRadomItems();
       this.wasDone = false;
     }
   }
@@ -257,6 +256,7 @@ export class Board extends Phaser.Sprite {
     }
     if (this.wasDone) {
       this.updateMatrixCell();
+      this.generateRadomItems();
 
       // this.generateRadomItems()
       this.wasDone = false;
@@ -274,6 +274,7 @@ export class Board extends Phaser.Sprite {
     }
     if (this.wasDone) {
       this.updateMatrixCell();
+      this.generateRadomItems();
 
       this.wasDone = false;
     }
@@ -290,6 +291,7 @@ export class Board extends Phaser.Sprite {
     }
     if (this.wasDone) {
       this.updateMatrixCell();
+      this.generateRadomItems();
 
       // this.generateRadomItems()
       this.wasDone = false;
@@ -311,32 +313,33 @@ export class Board extends Phaser.Sprite {
     ) {
       return 0;
     }
+    // console.warn(nextRow, nextCol);
+
     if (
-      !this._cells[nextRow][nextCol].hasItem() &&
+      this._cells[nextRow][nextCol].hasItem() &&
       this._cells[nextRow][nextCol].itemValue() === cell.itemValue()
     ) {
-      this.item = cell.removeItemINCell();
-      this._cells[nextRow][nextCol].addItem(this.item);
-      this.wasDone = true;
-      this.moveItem(this._cells[nextRow][nextCol], vektr);
-    } else if (this._cells[nextRow][nextCol].itemValue() === cell.itemValue()) {
       this.updateMatrixCell();
       const newLabel = 2 * cell.itemValue();
       const { x, y } = this._cells[nextRow][nextCol];
       const prom = new Promise((resolve) => {
-        this.game.add
-          .tween(cell.item)
-          .to({ x, y }, 300, Phaser.Easing.Linear.None, true, 0)
-          .onComplete.add(() => {});
+        this.wasDone = true;
+        cell.removeItemINCell();
+        this.removeItems(cell.row, cell.col);
+        this.removeItems(nextRow, nextCol);
+      }).then(
+        this.buildItems(nextRow, nextCol, newLabel).then(() => {
+          this.wasDone = true;
+          this.updateMatrixCell();
+        })
 
-        this.promArrary.push(prom);
-      })
-        .then(cell.removeItemINCell())
-        .then(this.removeItems(cell.row, cell.col))
-        .then(this.removeItems(nextRow, nextCol))
-        .then(this.buildItems(nextRow, nextCol, newLabel))
-        .then((this.wasDone = true))
-        .then(this.updateMatrixCell());
+        // .then(this.generateRadomItems())
+      );
+    } else if (!this._cells[nextRow][nextCol].hasItem()) {
+      this.item = cell.removeItemINCell();
+      this._cells[nextRow][nextCol].addItem(this.item);
+      this.wasDone = true;
+      this.moveItem(this._cells[nextRow][nextCol], vektr);
     } else {
       if (!this.item) {
         return;
