@@ -22,11 +22,13 @@ export class Board extends Phaser.Sprite {
     this.wasDone = false;
     this._startPosition = [];
     this._finishPosition = [];
-    window.addEventListener('keydown', this.pointerControler.bind(this));
-    this._addListeners();
+    this._addAllEvents();
+    this.returnMat(); ///**** */
   }
 
-  _addListeners() {
+  _addAllEvents() {
+    window.addEventListener('keydown', this.pointerControler.bind(this));
+
     const state = this.game.state.getCurrentState();
 
     state.input.onUp.add(this._onPointerUp, this);
@@ -44,7 +46,13 @@ export class Board extends Phaser.Sprite {
         }
       });
     });
-    return match;
+    return false;
+  }
+
+  returnMat() {
+    const arr = this.children.filter((item) => item.labelVal);
+    console.warn(arr);
+    return arr;
   }
 
   _onPointerUp(e) {
@@ -123,12 +131,13 @@ export class Board extends Phaser.Sprite {
       const item = new Item(this.game, i, j, val);
       this.game.add
         .tween(item.scale)
-        .from({ x: 0.1, y: 0.1 }, 200, Phaser.Easing.Back.Out, true, 150);
+        .from({ x: 0.1, y: 0.1 }, 200, Phaser.Easing.Back.Out, true, 0);
 
       item.position.set(j * (150 + gap) + 50, i * (150 + gap) + 50);
 
       this._cells[i][j].addItem(item);
       this.addChild(item);
+      this.wasDone = false;
     });
     return promis;
   }
@@ -137,6 +146,7 @@ export class Board extends Phaser.Sprite {
     if (this.dontMove) {
       return;
     }
+    this.dontMove = true;
     switch (e.key) {
       case 'ArrowUp':
         this.goToUp();
@@ -150,6 +160,14 @@ export class Board extends Phaser.Sprite {
       case 'ArrowLeft':
         this.goToLeft();
         break;
+    }
+  }
+
+  genereteItem() {
+    if (this.wasDone) {
+      this.updateMatrixCell().then(this.generateRadomItems.bind(this));
+
+      // this.generateRadomItems()
     }
   }
 
@@ -167,7 +185,6 @@ export class Board extends Phaser.Sprite {
   }
 
   updateMatrixCell() {
-    this.dontMove = true;
     this.promArrary = [];
     this._cells.forEach((row) => {
       row.forEach((cell) => {
@@ -177,10 +194,7 @@ export class Board extends Phaser.Sprite {
       });
     });
     const twinActionsPromice = Promise.all(this.promArrary);
-    twinActionsPromice.then(() => {
-      this.checkGame();
-    });
-    this.dontMove = false;
+    return twinActionsPromice;
   }
 
   removeItems(row, col) {
@@ -198,7 +212,7 @@ export class Board extends Phaser.Sprite {
     const prom = new Promise((resolve) => {
       this.game.add
         .tween(item)
-        .to({ x, y }, 200, Phaser.Easing.Linear.None, true, 0)
+        .to({ x, y }, 2000, Phaser.Easing.Linear.None, true, 0)
         .onComplete.add(() => {
           resolve();
         });
@@ -214,18 +228,14 @@ export class Board extends Phaser.Sprite {
     const { x, y } = cell;
     const prom = new Promise((resolve) => {
       this.game.add
-        .tween(item)
-        .from({ x, y }, 200, Phaser.Easing.Linear, true, 350)
+        .tween(item.scale)
+        .from({ x, y }, 200, Phaser.Easing.Linear, true, 0)
         .onComplete.add(() => {
           resolve();
         });
-    }).then(() => {
-      item.resolve.set(0.7, 0.7);
     });
-    then(() => {
-      this.promArrary.push(prom);
-      this.wasDone = true;
-    });
+
+    this.promArrary.push(prom);
   }
 
   goToUp() {
@@ -238,11 +248,7 @@ export class Board extends Phaser.Sprite {
       }
     }
 
-    if (this.wasDone) {
-      this.updateMatrixCell();
-      this.generateRadomItems();
-      this.wasDone = false;
-    }
+    this.genereteItem();
   }
 
   goToDown() {
@@ -254,13 +260,7 @@ export class Board extends Phaser.Sprite {
         }
       }
     }
-    if (this.wasDone) {
-      this.updateMatrixCell();
-      this.generateRadomItems();
-
-      // this.generateRadomItems()
-      this.wasDone = false;
-    }
+    this.genereteItem();
   }
 
   goToLeft() {
@@ -272,12 +272,7 @@ export class Board extends Phaser.Sprite {
         }
       }
     }
-    if (this.wasDone) {
-      this.updateMatrixCell();
-      this.generateRadomItems();
-
-      this.wasDone = false;
-    }
+    this.genereteItem();
   }
 
   goToRight() {
@@ -289,13 +284,7 @@ export class Board extends Phaser.Sprite {
         }
       }
     }
-    if (this.wasDone) {
-      this.updateMatrixCell();
-      this.generateRadomItems();
-
-      // this.generateRadomItems()
-      this.wasDone = false;
-    }
+    this.genereteItem();
   }
 
   moveItem(cell, vektr) {
@@ -319,17 +308,16 @@ export class Board extends Phaser.Sprite {
       this._cells[nextRow][nextCol].hasItem() &&
       this._cells[nextRow][nextCol].itemValue() === cell.itemValue()
     ) {
-      this.updateMatrixCell();
       const newLabel = 2 * cell.itemValue();
       const { x, y } = this._cells[nextRow][nextCol];
       const prom = new Promise((resolve) => {
+        this.updateMatrixCell();
         this.wasDone = true;
         cell.removeItemINCell();
         this.removeItems(cell.row, cell.col);
         this.removeItems(nextRow, nextCol);
       }).then(
         this.buildItems(nextRow, nextCol, newLabel).then(() => {
-          this.wasDone = true;
           this.updateMatrixCell();
         })
 
